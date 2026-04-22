@@ -1,10 +1,18 @@
+import Image from "next/image";
+
 export default function SiteHeader() {
   return (
     <header className="site-header">
-      {/* Logo: [BIG] THINK */}
+      {/* Logo */}
       <a href="#" className="site-logo" aria-label="Big Think">
-        <span className="site-logo-big">BIG</span>
-        <span className="site-logo-think">THINK</span>
+        <Image
+          src="/images/btlogo.png"
+          alt="Big Think"
+          width={120}
+          height={36}
+          className="site-logo-img"
+          priority
+        />
       </a>
 
       {/* Left cluster: Search + Topics */}
