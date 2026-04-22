@@ -1,19 +1,19 @@
 import type { Metadata } from "next";
-import { Source_Serif_4, Inter } from "next/font/google";
+import { Oswald, Libre_Baskerville } from "next/font/google";
 import "./globals.css";
 
-const sourceSerif = Source_Serif_4({
+const oswald = Oswald({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  style: ["normal", "italic"],
-  variable: "--font-source-serif",
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-oswald",
   display: "swap",
 });
 
-const inter = Inter({
+const libreBaskerville = Libre_Baskerville({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-inter",
+  weight: ["400", "700"],
+  style: ["normal", "italic"],
+  variable: "--font-libre-baskerville",
   display: "swap",
 });
 
@@ -27,7 +27,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${sourceSerif.variable} ${inter.variable}`}>
+    <html lang="en" className={`${oswald.variable} ${libreBaskerville.variable}`}>
       <body>{children}</body>
     </html>
   );

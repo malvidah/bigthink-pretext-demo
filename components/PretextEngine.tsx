@@ -7,7 +7,7 @@ import type {
   LayoutLineRange,
 } from "@chenglou/pretext";
 
-const BODY_FONT = "500 19px 'Source Serif 4', Georgia, serif";
+const BODY_FONT = "400 19px 'Libre Baskerville', Georgia, serif";
 const LINE_HEIGHT = 30;
 
 type LayoutFn = (
