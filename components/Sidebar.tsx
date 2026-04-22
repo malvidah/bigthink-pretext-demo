@@ -5,9 +5,9 @@ export default function Sidebar() {
         <div className="sidebar-label">This article is part of</div>
         <p className="sidebar-issue-text">
           Big Think&rsquo;s monthly issue on{" "}
-          <a href="#">The Conscious Mind</a> &mdash; exploring what science
-          and philosophy are learning about awareness, experience, and the
-          self.
+          <a href="#">The Roots of Resilience</a> &mdash; exploring what
+          science and psychology are learning about bouncing back, burning
+          out, and everything in between.
         </p>
       </div>
 
@@ -30,12 +30,11 @@ export default function Sidebar() {
         <div className="sidebar-label">Topics</div>
         <div className="sidebar-tags">
           {[
-            "Consciousness",
-            "Neuroscience",
-            "Philosophy of Mind",
-            "Free Will",
-            "Brain",
-            "Entropy",
+            "Mind & Behavior",
+            "Emotional Intelligence",
+            "Psychology",
+            "Adaptability",
+            "Resilience",
           ].map((tag) => (
             <a key={tag} href="#" className="sidebar-tag">
               {tag}

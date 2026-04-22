@@ -5,7 +5,6 @@ export default function ArticleContent() {
   return (
     <article className="article-main">
       {/* Article header */}
-      <div className="article-eyebrow">Mind &amp; Behavior · Psychology</div>
       <div className="article-rule" />
       <h1 className="article-headline">
         The resilience paradox: When pushing through makes things worse
@@ -25,10 +24,11 @@ export default function ArticleContent() {
       {/* Hero image */}
       <div className="article-hero">
         <Image
-          src="/images/juggler.png"
-          alt="A figure balancing shapes on a tightrope — illustrating the precarious act of resilience"
+          src="/images/squares.png"
+          alt="A colorful grid of patterned squares — the fragmented geometry of resilience"
           width={700}
-          height={360}
+          height={700}
+          style={{ width: "100%", height: "auto" }}
           className="article-hero-img"
           priority
         />

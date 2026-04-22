@@ -2,9 +2,15 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "Next.js dev server",
+      "name": "Next.js dev",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
+      "port": 3000
+    },
+    {
+      "name": "Next.js prod preview",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "start"],
       "port": 3000
     }
   ]

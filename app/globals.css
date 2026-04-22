@@ -367,7 +367,7 @@ a { color: inherit; text-decoration: none; }
 }
 .article-headline {
   font-family: var(--display);
-  font-weight: 700;
+  font-weight: 400;
   font-size: 48px;
   line-height: 1.1;
   letter-spacing: -0.01em;
