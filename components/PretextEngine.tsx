@@ -63,17 +63,14 @@ function flowLines(
   return maxY;
 }
 
-async function sampleSilhouetteRightEdge(
-  svgEl: SVGElement,
+async function sampleImageRightEdge(
+  imgSrc: string,
   width: number,
   height: number
 ): Promise<number[]> {
-  const svgString = new XMLSerializer().serializeToString(svgEl);
-  const blob = new Blob([svgString], { type: "image/svg+xml" });
-  const url = URL.createObjectURL(blob);
-
   const img = new Image();
-  img.src = url;
+  img.crossOrigin = "anonymous";
+  img.src = imgSrc;
   await new Promise<void>((res, rej) => {
     img.onload = () => res();
     img.onerror = rej;
@@ -84,7 +81,6 @@ async function sampleSilhouetteRightEdge(
   canvas.height = height;
   const ctx = canvas.getContext("2d")!;
   ctx.drawImage(img, 0, 0, width, height);
-  URL.revokeObjectURL(url);
 
   const data = ctx.getImageData(0, 0, width, height).data;
   const edges: number[] = new Array(height).fill(0);
@@ -101,6 +97,19 @@ async function sampleSilhouetteRightEdge(
   return edges;
 }
 
+async function sampleSilhouetteRightEdge(
+  svgEl: SVGElement,
+  width: number,
+  height: number
+): Promise<number[]> {
+  const svgString = new XMLSerializer().serializeToString(svgEl);
+  const blob = new Blob([svgString], { type: "image/svg+xml" });
+  const url = URL.createObjectURL(blob);
+  const edges = await sampleImageRightEdge(url, width, height);
+  URL.revokeObjectURL(url);
+  return edges;
+}
+
 async function renderOpening(
   prepareWithSegments: (t: string, f: string) => PreparedTextWithSegments,
   layoutNextLineRange: LayoutFn,
@@ -114,7 +123,7 @@ async function renderOpening(
   const dropCapLines = 3;
 
   const text =
-    `or centuries, philosophers and scientists have grappled with what contemporary thinkers like Joseph Levine and David Chalmers call the "explanatory gap" or the "hard problem" of consciousness. At least on the surface, there seems to be a categorical difference between descriptions of the material and descriptions of the mind. In spite of this gap, modern neuroscience has made significant progress mapping the neural correlates of consciousness — identifying patterns and brain regions that reliably track specific conscious states. But correlation, as we know, is not explanation.`;
+    `or years, I prided myself on being resilient. As a founder and a neuroscientist, I wore my capacity to endure like a badge of honor. I learned to push myself further, work longer hours, and absorb pressure without showing cracks. Each time I hit a wall, I adapted, trying to become tougher — until my body stopped cooperating.`;
 
   const prepared = prepareWithSegments(text, BODY_FONT);
   const widthFn = (y: number) => {
@@ -151,7 +160,7 @@ async function renderFloat(
   const illoLeft = illo.offsetLeft;
 
   const text =
-    `Applying information-theoretic measures like entropy to the study of consciousness isn't new. In the 1990s, neuroscientists Giulio Tononi and Gerald Edelman used Shannon entropy as part of the foundation for their Integrated Information Theory of consciousness, which argues that consciousness is analogous to the integration and complexity of neural signals. More recently, Robin Carhart-Harris proposed the Entropic Brain Hypothesis, showing that altered states of consciousness — from deep anesthesia to dreaming to psychedelic experiences — can be mapped to varying levels of neural entropy. Psychedelic states, for instance, are associated with high entropy, while deep anesthesia is marked by unusually low entropy. A new framework, however, takes a different perspective entirely: that punctuated spikes of neural entropy may not just reflect levels of consciousness but may actually be signs of consciousness exerting causal influence on the brain itself. This idea inverts a century of assumptions.`;
+    `Psychologist George Bonanno, one of the leading researchers on resilience, has argued that resilience is not a fixed trait but a pattern of regulatory flexibility — the ability to choose different strategies depending on context. The paradox appears when resilience gets mistaken for a single strategy: to endure and keep going. This turns resilience into a rigid form of grit. In several studies, people with higher grit were more likely to persist at tasks that were objectively unwinnable. They played longer, invested more effort, and lost more money. The same quality that helps those people finish hard things also makes them slower to abandon unworkable ones. A similar misreading happens in how we interpret adversity. One of the most widely cited findings in psychology is a U-shaped curve: People who have experienced some adversity report better long-term well-being than those who've experienced none or a lot. This nuance is often flattened into a slogan — "what doesn't kill you makes you stronger" — which ignores the steep drop-off in well-being at high levels of adversity.`;
 
   const prepared = prepareWithSegments(text, BODY_FONT);
   const widthFn = (y: number) =>
@@ -183,15 +192,19 @@ async function renderSilhouette(
   const silTop = silEl.offsetTop;
   const silWidth = silEl.offsetWidth;
   const silHeight = silEl.offsetHeight;
-  const svgEl = silEl.querySelector("svg")!;
-  const rightEdges = await sampleSilhouetteRightEdge(svgEl, silWidth, silHeight);
+
+  // Prefer PNG alpha-sampling via data-img; fall back to SVG rasterization
+  const pngSrc = silEl.getAttribute("data-img");
+  const rightEdges = pngSrc
+    ? await sampleImageRightEdge(pngSrc, silWidth, silHeight)
+    : await sampleSilhouetteRightEdge(silEl.querySelector("svg")!, silWidth, silHeight);
 
   const pullLeft = pullEl.offsetLeft;
   const pullTop = pullEl.offsetTop;
   const pullBottom = pullTop + pullEl.offsetHeight;
 
   const text =
-    `Instead of just seeing this rise in neural entropy as a result of increased heat due to brain metabolism, or as a result of not capturing all of the physical variables at play in the brain, Irruption Theory proposes that these entropy spikes are the signatures of consciousness acting upon the brain — not merely being produced by it. The framework doesn't abandon materialism so much as extend it: if conscious effort leaves a measurable thermodynamic footprint, then consciousness has a kind of causal traction on physical matter. It's a profoundly strange claim, but one that Froese argues follows from the data. Whether the theory survives falls to future experiments, but it reshapes what a positive result could even look like.`;
+    `Resilience is not a virtue but a strategy, and like all strategies, it has some failure modes. Instead of applying it blindly and rigidly, here are five evidence-based ways to practice resilience without letting it backfire. Distinguish between challenges and traps. Challenges are temporary obstacles with clear pathways forward; traps are situations where more effort yields diminishing or negative returns. Before doubling down, ask: if I keep going like this, is the situation likely to improve? If the answer is no, being resilient in that situation is not strength — it's inertia. Monitor your body's veto power. Chronic fatigue, persistent anxiety, or recurring illness aren't signs you need more resilience; they're signs you need different strategies. Practice strategic quitting. Changing paths when costs outweigh benefits is a core component of emotional agility. Sometimes, the most resilient thing you can do is walk away. Separate your worth from your resilience. Your value isn't measured by how much you can bear. Look for systemic solutions. Sometimes, the most effective response to adversity is working to eliminate its source rather than learning to tolerate it better.`;
 
   const prepared = prepareWithSegments(text, BODY_FONT);
 
