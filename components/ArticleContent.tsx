@@ -239,14 +239,6 @@ export default function ArticleContent() {
             imgHeight={381}
             extraClass="img-heads"
           />
-          <InteractiveImage
-            dataImg="/images/squares.png"
-            src="/images/squares.png"
-            alt="Geometric squares illustration"
-            imgWidth={386}
-            imgHeight={376}
-            extraClass="img-squares"
-          />
         </div>
 
         {/* ── PAGE 2: Overflow spread (used when content exceeds 4 cols) ─── */}
@@ -259,6 +251,15 @@ export default function ArticleContent() {
               <div className="flow-text loading" />
             </div>
           </div>
+
+          <InteractiveImage
+            dataImg="/images/squares.png"
+            src="/images/squares.png"
+            alt="Geometric squares illustration"
+            imgWidth={386}
+            imgHeight={376}
+            extraClass="img-squares"
+          />
         </div>
 
       </div>{/* end .pages-strip */}
