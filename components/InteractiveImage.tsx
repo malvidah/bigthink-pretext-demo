@@ -75,6 +75,7 @@ export default function InteractiveImage({ dataImg, src, alt, imgWidth, imgHeigh
   const dragRef = useRef<{ handle: Handle; sx: number; sy: number; t0: Transform; startAngle: number } | null>(null);
   const [selected, setSelected] = useState(false);
   const [contentBox, setContentBox] = useState<{ left: number; top: number; right: number; bottom: number } | null>(null);
+  const [layoutReady, setLayoutReady] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -88,17 +89,18 @@ export default function InteractiveImage({ dataImg, src, alt, imgWidth, imgHeigh
     getSavedLayout().then(layout => {
       if (cancelled) return;
       const entry = layout[dataImg];
-      if (!entry) return;
       const el = ref.current;
       const parent = el?.offsetParent as HTMLElement | null;
-      if (!el || !parent) return;
-      apply({
-        x: entry.fx * parent.offsetWidth,
-        y: entry.fy * parent.offsetHeight,
-        w: entry.fw * parent.offsetWidth,
-        h: entry.fh * parent.offsetHeight,
-        rot: entry.rot,
-      });
+      if (entry && el && parent) {
+        apply({
+          x: entry.fx * parent.offsetWidth,
+          y: entry.fy * parent.offsetHeight,
+          w: entry.fw * parent.offsetWidth,
+          h: entry.fh * parent.offsetHeight,
+          rot: entry.rot,
+        });
+      }
+      setLayoutReady(true);
     });
     return () => { cancelled = true; };
   }, [dataImg]);
@@ -263,9 +265,10 @@ export default function InteractiveImage({ dataImg, src, alt, imgWidth, imgHeigh
     window.addEventListener("mouseup", up);
   };
 
-  // Style prop only manages cursor — never position/size (those come from CSS class or apply())
+  // Style prop only manages cursor and initial visibility.
   const style: React.CSSProperties = {
     cursor: selected ? "grab" : "default",
+    visibility: layoutReady ? "visible" : "hidden",
   };
 
   return (
