@@ -58,16 +58,16 @@ export default function SiteHeader() {
 function Chevron() {
   return (
     <svg
-      width="10"
-      height="6"
+      width="8"
+      height="5"
       viewBox="0 0 10 6"
       fill="none"
       stroke="currentColor"
-      strokeWidth={1.8}
+      strokeWidth={1}
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
-      style={{ display: "inline-block", verticalAlign: "middle", marginTop: "-1px" }}
+      style={{ display: "inline-block", verticalAlign: "middle", marginTop: "-1px", opacity: 0.55 }}
     >
       <path d="M1 1l4 4 4-4" />
     </svg>

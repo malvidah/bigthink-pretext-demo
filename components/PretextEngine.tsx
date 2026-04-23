@@ -17,8 +17,8 @@ import {
   type Rect,
 } from "./wrap-geometry";
 
-const BODY_FONT = "400 19px 'Libre Baskerville', Georgia, serif";
-const LINE_HEIGHT = 30;
+const BODY_FONT = "400 16px 'Libre Baskerville', Georgia, serif";
+const LINE_HEIGHT = 23;
 const GAP = 20;
 const MIN_REGION_WIDTH = 110;
 const PARA_GAP = 14;
@@ -58,11 +58,11 @@ const ARTICLE: Item[] = [
 
   { kind: "h", text: "Resilience as strategy" },
   { kind: "p", text: `Resilience is not a virtue but a strategy, and like all strategies, it has failure modes. Instead of applying it blindly and rigidly, here are five evidence-based ways to practice resilience without letting it backfire.` },
-  { kind: "p", text: `Distinguish between challenges and traps. Challenges are temporary obstacles with clear pathways forward; traps are situations where more effort yields diminishing or negative returns. Before doubling down, ask: if I keep going like this, is the situation likely to improve?` },
-  { kind: "p", text: `Monitor your body's veto power. Chronic fatigue, persistent anxiety, or recurring illness aren't signs you need more resilience; they're signs you need different strategies.` },
-  { kind: "p", text: `Practice strategic quitting. Changing paths when costs outweigh benefits is a core component of emotional agility.` },
-  { kind: "p", text: `Separate your worth from your resilience. Your value isn't measured by how much you can bear.` },
-  { kind: "p", text: `Look for systemic solutions. Sometimes, the most effective response to adversity is working to eliminate its source rather than learning to tolerate it better.` },
+  { kind: "p", text: `1. Distinguish between challenges and traps. Challenges are temporary obstacles with clear pathways forward; traps are situations where more effort yields diminishing or negative returns. Before doubling down, ask: if I keep going like this, is the situation likely to improve?` },
+  { kind: "p", text: `2. Monitor your body's veto power. Chronic fatigue, persistent anxiety, or recurring illness aren't signs you need more resilience; they're signs you need different strategies.` },
+  { kind: "p", text: `3. Practice strategic quitting. Changing paths when costs outweigh benefits is a core component of emotional agility.` },
+  { kind: "p", text: `4. Separate your worth from your resilience. Your value isn't measured by how much you can bear.` },
+  { kind: "p", text: `5. Look for systemic solutions. Sometimes, the most effective response to adversity is working to eliminate its source rather than learning to tolerate it better.` },
 ];
 
 interface FlowState { pIdx: number; cursor: LayoutCursor }
@@ -150,6 +150,14 @@ function evaluateColumn(
   const colW = ft.clientWidth;
   const availH = col.clientHeight || ft.clientHeight || 9999;
 
+  // The .paged-article may have a CSS `transform: scale(s)` applied for fit-
+  // to-viewport. getBoundingClientRect() returns post-transform (viewport)
+  // pixels, while offsetLeft/clientWidth return pre-transform (layout) pixels.
+  // Convert client-rect deltas into layout pixels via the current scale so
+  // obstacles line up with the unscaled coordinate system pretext uses.
+  const scaleS = ftRect.width > 0 && ft.clientWidth > 0 ? ftRect.width / ft.clientWidth : 1;
+  const inv = scaleS === 0 ? 1 : 1 / scaleS;
+
   // Dropcap top: measured from the cover-text-block, not rendered via pool.
   let dropCapTop: number | null = null;
   const dropCapEl = col.querySelector<HTMLElement>(".dropcap");
@@ -157,14 +165,14 @@ function evaluateColumn(
     const textBlock = col.querySelector<HTMLElement>(".cover-text-block");
     if (textBlock) {
       const tbRect = textBlock.getBoundingClientRect();
-      dropCapTop = Math.max(0, tbRect.bottom - ftRect.top + 36);
+      dropCapTop = Math.max(0, (tbRect.bottom - ftRect.top) * inv + 36);
     }
   }
 
   // Collect image polygon obstacles (alpha hulls, with rotation).
   const pageRect = pageEl.getBoundingClientRect();
-  const offX = pageRect.left - ftRect.left;
-  const offY = pageRect.top - ftRect.top;
+  const offX = (pageRect.left - ftRect.left) * inv;
+  const offY = (pageRect.top - ftRect.top) * inv;
 
   const images = Array.from(pageEl.querySelectorAll<HTMLElement>(".spread-image"));
   const polygons: Point[][] = [];
@@ -194,10 +202,10 @@ function evaluateColumn(
   const rects: Rect[] = obstacles.map(el => {
     const r = el.getBoundingClientRect();
     return {
-      x: r.left - ftRect.left,
-      y: r.top - ftRect.top,
-      width: r.width,
-      height: r.height,
+      x: (r.left - ftRect.left) * inv,
+      y: (r.top - ftRect.top) * inv,
+      width: r.width * inv,
+      height: r.height * inv,
     };
   }).filter(r => r.y + r.height > 0 && r.y < availH && r.x + r.width > 0 && r.x < colW);
 
@@ -325,13 +333,28 @@ function projectColumn(col: HTMLElement, projection: ColumnProjection): void {
     dropCapEl.style.top = projection.dropCapTop + "px";
   }
 
+  const postBlock = col.querySelector<HTMLElement>(".post-text-block");
+  if (postBlock) {
+    const lastLine = projection.lines[projection.lines.length - 1];
+    const textBottom = lastLine ? lastLine.top + LINE_HEIGHT : 0;
+    const top = textBottom === 0 ? 0 : textBottom + 40;
+    postBlock.style.top = top + "px";
+  }
+
   const pool = syncLinePool(ft, projection.lines.length);
   for (let i = 0; i < projection.lines.length; i++) {
     const line = projection.lines[i]!;
     const el = pool[i]!;
     const className = line.kind === "h" ? "section-heading" : "flow-line";
     if (el.className !== className) el.className = className;
-    if (el.textContent !== line.text) el.textContent = line.text;
+    const leadingNum = line.kind === "p" ? line.text.match(/^(\d+)\.\s+/) : null;
+    if (leadingNum) {
+      const rest = line.text.slice(leadingNum[0].length);
+      const html = `<strong>${leadingNum[1]}.</strong> ${rest.replace(/&/g, "&amp;").replace(/</g, "&lt;")}`;
+      if (el.innerHTML !== html) el.innerHTML = html;
+    } else if (el.textContent !== line.text) {
+      el.textContent = line.text;
+    }
     const top = line.top + "px";
     const left = line.left + "px";
     const width = line.width + "px";
@@ -365,19 +388,78 @@ function commitFrame(): void {
 
   const allCols = Array.from(document.querySelectorAll<HTMLElement>("[data-text]"));
   let state: FlowState = { pIdx: 0, cursor: { segmentIndex: 0, graphemeIndex: 0 } };
+  const perCol: { col: HTMLElement; projection: ColumnProjection }[] = [];
+  let endingCol: HTMLElement | null = null;
 
   for (const col of allCols) {
     const pageEl = col.closest<HTMLElement>(".page-spread");
     if (!pageEl) continue;
+    const beforePIdx = state.pIdx;
     const { projection, next } = evaluateColumn(col, pageEl, state);
     state = next;
+    perCol.push({ col, projection });
+    if (
+      beforePIdx < ARTICLE.length &&
+      state.pIdx >= ARTICLE.length &&
+      projection.lines.length > 0
+    ) {
+      endingCol = col;
+    }
+  }
 
+  // Place .post-text-block in the column article text ends in, or the next
+  // empty column if it doesn't fit below the last line.
+  const postBlock = document.querySelector<HTMLElement>(".post-text-block");
+  let movedInto: HTMLElement | null = null;
+  let startAtTop = false;
+  if (postBlock && endingCol) {
+    const endingIdx = perCol.findIndex(p => p.col === endingCol);
+    const endingProj = perCol[endingIdx]!.projection;
+    const lastLine = endingProj.lines[endingProj.lines.length - 1];
+    const textBottom = lastLine ? lastLine.top + LINE_HEIGHT : 0;
+    const colH = endingCol.clientHeight;
+    const blockH = postBlock.offsetHeight || 0;
+    const GAP_ABOVE = 40;
+    const fits = textBottom + GAP_ABOVE + blockH <= colH;
+
+    let target: HTMLElement = endingCol;
+    if (!fits) {
+      const next = perCol[endingIdx + 1];
+      if (next && next.projection.lines.length === 0) {
+        target = next.col;
+        startAtTop = true;
+      }
+    }
+    if (postBlock.parentElement !== target) {
+      target.appendChild(postBlock);
+      movedInto = target;
+    } else if (postBlock.parentElement === endingCol && !fits) {
+      // Already in endingCol but doesn't fit — still mark for reposition
+      movedInto = endingCol;
+    }
+  }
+
+  for (const { col, projection } of perCol) {
     const prev = committedByColumn.get(col);
-    if (!projectionEqual(prev, projection)) {
+    const needsWrite = !projectionEqual(prev, projection) || col === movedInto;
+    if (needsWrite) {
       projectColumn(col, projection);
       committedByColumn.set(col, projection);
     }
   }
+
+  // Count columns that received at least one line of article text. The column
+  // holding .post-text-block is also considered used even if no lines landed
+  // in it. Report so ArticleContent can grow the page count to fit overflow.
+  let colsUsed = 0;
+  for (let i = 0; i < perCol.length; i++) {
+    const { col, projection } = perCol[i];
+    const hasText = projection.lines.length > 0;
+    const holdsPostBlock = !!col.querySelector(":scope > .post-text-block");
+    if (hasText || holdsPostBlock) colsUsed = i + 1;
+  }
+  const cb = (window as unknown as { __onArticleColsUsed?: (n: number) => void }).__onArticleColsUsed;
+  if (cb) cb(colsUsed);
 }
 
 // ─── async init ───────────────────────────────────────────────────────────────

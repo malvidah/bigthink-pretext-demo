@@ -92,13 +92,14 @@ export default function InteractiveImage({ dataImg, src, alt, imgWidth, imgHeigh
       const el = ref.current;
       const parent = el?.offsetParent as HTMLElement | null;
       if (entry && el && parent) {
-        apply({
-          x: entry.fx * parent.offsetWidth,
-          y: entry.fy * parent.offsetHeight,
-          w: entry.fw * parent.offsetWidth,
-          h: entry.fh * parent.offsetHeight,
-          rot: entry.rot,
-        });
+        const MIN_VISIBLE = 48;
+        const w = entry.fw * parent.offsetWidth;
+        const h = entry.fh * parent.offsetHeight;
+        const rawX = entry.fx * parent.offsetWidth;
+        const rawY = entry.fy * parent.offsetHeight;
+        const x = Math.max(-(w - MIN_VISIBLE), Math.min(parent.offsetWidth - MIN_VISIBLE, rawX));
+        const y = Math.max(-(h - MIN_VISIBLE), Math.min(parent.offsetHeight - MIN_VISIBLE, rawY));
+        apply({ x, y, w, h, rot: entry.rot });
       }
       setLayoutReady(true);
     });
@@ -189,7 +190,40 @@ export default function InteractiveImage({ dataImg, src, alt, imgWidth, imgHeigh
     const startAngle = Math.atan2(e.clientY - cy0, e.clientX - cx0);
     dragRef.current = { handle, sx: e.clientX, sy: e.clientY, t0: { ...t0 }, startAngle };
 
+    let lastStepAt = 0;
+    const tryPageStep = (ev: MouseEvent) => {
+      if (dragRef.current?.handle !== "body") return;
+      const now = performance.now();
+      if (now - lastStepAt < 450) return;
+      const pager = (window as unknown as { __articlePager?: { page: number; total: number; goTo: (n: number) => void } }).__articlePager;
+      if (!pager) return;
+      const vw = window.innerWidth;
+      const edgeZone = 60;
+      let dir = 0;
+      if (ev.clientX < edgeZone && pager.page > 0) dir = -1;
+      else if (ev.clientX > vw - edgeZone && pager.page < pager.total - 1) dir = 1;
+      if (dir === 0) return;
+
+      const el = ref.current;
+      if (!el) return;
+      const pages = document.querySelectorAll<HTMLElement>(".page-spread");
+      const newPage = pages[pager.page + dir];
+      if (!newPage) return;
+
+      lastStepAt = now;
+      newPage.appendChild(el);
+      // Keep pages-strip transform in sync imperatively so no visual jump
+      // between reparent and React re-render.
+      const strip = document.querySelector<HTMLElement>(".pages-strip");
+      if (strip) strip.style.transform = `translateX(calc(-${pager.page + dir} * 100%))`;
+      pager.goTo(pager.page + dir);
+      // Image's local left/top remain valid because new parent has identical
+      // dimensions and is now at the same screen origin as old parent was.
+      // fracRef will be refreshed on the next apply() call from the drag.
+    };
+
     const move = (ev: MouseEvent) => {
+      tryPageStep(ev);
       const d = dragRef.current;
       if (!d) return;
       const dxScreen = ev.clientX - d.sx;
@@ -257,6 +291,20 @@ export default function InteractiveImage({ dataImg, src, alt, imgWidth, imgHeigh
     };
 
     const up = () => {
+      // Clamp so at least MIN_VISIBLE pixels of the image remain inside its page.
+      const MIN_VISIBLE = 48;
+      const el = ref.current;
+      const parent = el?.offsetParent as HTMLElement | null;
+      const t = tRef.current;
+      if (el && parent && t) {
+        const maxX = parent.offsetWidth - MIN_VISIBLE;
+        const minX = -(t.w - MIN_VISIBLE);
+        const maxY = parent.offsetHeight - MIN_VISIBLE;
+        const minY = -(t.h - MIN_VISIBLE);
+        const cx = Math.max(minX, Math.min(maxX, t.x));
+        const cy = Math.max(minY, Math.min(maxY, t.y));
+        if (cx !== t.x || cy !== t.y) apply({ ...t, x: cx, y: cy });
+      }
       dragRef.current = null;
       window.removeEventListener("mousemove", move);
       window.removeEventListener("mouseup", up);
