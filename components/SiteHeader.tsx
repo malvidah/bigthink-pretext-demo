@@ -41,7 +41,7 @@ export default function SiteHeader() {
       <nav className="nav-right">
         <a href="#" className="nav-right-link">Latest</a>
         <a href="#" className="nav-right-link nav-dropdown">Videos <Chevron /></a>
-        <a href="#" className="nav-right-link nav-dropdown">Columns <Chevron /></a>
+        <a href="#" className="nav-right-link nav-dropdown">Courses <Chevron /></a>
         <a href="#" className="nav-right-link nav-dropdown">Classes <Chevron /></a>
         <a href="#" className="nav-right-link nav-dropdown">More <Chevron /></a>
       </nav>

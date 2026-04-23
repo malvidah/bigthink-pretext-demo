@@ -1,6 +1,13 @@
 import type { Metadata } from "next";
-import { Oswald, Libre_Baskerville } from "next/font/google";
+import { Inter, Oswald, Libre_Baskerville } from "next/font/google";
 import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-inter",
+  display: "swap",
+});
 
 const oswald = Oswald({
   subsets: ["latin"],
@@ -27,7 +34,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${oswald.variable} ${libreBaskerville.variable}`}>
+    <html lang="en" className={`${inter.variable} ${oswald.variable} ${libreBaskerville.variable}`}>
       <body>{children}</body>
     </html>
   );
